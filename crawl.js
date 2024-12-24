@@ -1,24 +1,41 @@
 const { JSDOM } = require('jsdom')
-async function crawlPage(currentUrl) {
+async function crawlPage(currentUrl,baseUrl,pages) {
+    const baseUrlObj = new URL(baseUrl)
+    const currentUrlObj = new URL(currentUrl)
+    if(baseUrlObj.hostname!==currentUrlObj.hostname){
+        return pages
+    }
+    const normalizeCurrentUrlObj = normalizeURL(currentUrl)
+    if(pages[normalizeCurrentUrlObj]>0){
+        pages[normalizeCurrentUrlObj]++
+        return pages
+    }
+    
+    pages[normalizeCurrentUrlObj]=1
+    
+
     try{
         console.log(`Actively crawlig ${currentUrl}`)
         const resp = await fetch(currentUrl)
         if(resp.status>399){
             console.log(`Valid Url not provided status code: ${resp.status}`)
-            return
+            return pages
         }
         const contentType = resp.headers.get("content-type")
         if(!contentType.includes("text/html")){
             console.log(`Invalid format of Data: ${contentType}`)
-            return
+            return pages
         }
-        console.log(await resp.text())
-        //console.log(resp.status)
+        const htmlBody = await resp.text()
+        const nextUrls = getURLsfromHTML(htmlBody,baseUrl)  
+        for(const nextUrl of nextUrls){
+            pages = await crawlPage(nextUrl,baseUrl,pages)
+        }      //console.log(resp.status)
     }
     catch(err){
         console.log(`Invalid URL: ${err.message}`)
     }
-    
+    return pages
     
 }
 function getURLsfromHTML(Htmlscript,baseUrl){
