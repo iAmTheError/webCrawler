@@ -1,8 +1,25 @@
 const { JSDOM } = require('jsdom')
 async function crawlPage(currentUrl) {
-    console.log(`Actively crawlig ${currentUrl}`)
-    const resp = await fetch(currentUrl)
-    console.log(await resp.text())
+    try{
+        console.log(`Actively crawlig ${currentUrl}`)
+        const resp = await fetch(currentUrl)
+        if(resp.status>399){
+            console.log(`Valid Url not provided status code: ${resp.status}`)
+            return
+        }
+        const contentType = resp.headers.get("content-type")
+        if(!contentType.includes("text/html")){
+            console.log(`Invalid format of Data: ${contentType}`)
+            return
+        }
+        console.log(await resp.text())
+        //console.log(resp.status)
+    }
+    catch(err){
+        console.log(`Invalid URL: ${err.message}`)
+    }
+    
+    
 }
 function getURLsfromHTML(Htmlscript,baseUrl){
     const urls = []
